@@ -4,7 +4,8 @@
  */
 
 var adapter = require('tower-adapter')
-  , stream = require('stream')
+  , topology = require('tower-topology')
+  , stream = require('stream') // http://nodejs.org/api/stream.html
   , ReadableStream = stream.Readable;
 
 /**
@@ -32,8 +33,16 @@ exports
  * Execute a database query.
  */
 
-exports.execute = function(criteria, fn){
+exports.execute = function(query, fn){
+  var topology = new Topology;
 
+  // XXX: group the query into a network of inputs/outputs.
+  for (var i = 0, n = query.length; i < n; i++) {
+    // topology.edge('posts', 'comments');
+    // topology.node('posts', function() {})
+  }
+
+  return topology;
 }
 
 /**
