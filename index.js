@@ -3,13 +3,21 @@
  * Module dependencies.
  */
 
-var adapter = require('tower-adapter');
+var adapter = require('tower-adapter')
+  , stream = require('stream')
+  , ReadableStream = stream.Readable;
 
 /**
- * `MongodbAdapter` constructor.
+ * Expose `mongodb` adapter.
  */
 
-var MongodbAdapter = adapter('mongodb')
+var exports = module.exports = adapter('mongodb');
+
+/**
+ * Define MongoDB adapter.
+ */
+
+exports
   .type('string')
   .type('text')
   .type('date')
@@ -20,42 +28,42 @@ var MongodbAdapter = adapter('mongodb')
   .type('bitmask')
   .type('array');
 
-MongodbAdapter.prototype.find = function(criteria, callback){
+/**
+ * Execute a database query.
+ */
+
+exports.execute = function(criteria, fn){
 
 }
 
-MongodbAdapter.prototype.all = function(criteria, callback){
+/**
+ * Create a database/collection/index.
+ */
+
+exports.create = function(name, fn){
 
 }
 
-MongodbAdapter.prototype.insert = function(criteria, callback){
+/**
+ * Update a database/collection/index.
+ */
+
+exports.update = function(name, fn){
 
 }
 
-MongodbAdapter.prototype.update = function(criteria, callback){
+/**
+ * Remove a database/collection/index.
+ */
+
+exports.remove = function(name, fn){
 
 }
 
-MongodbAdapter.prototype.remove = function(criteria, callback){
+/**
+ * Find a database/collection/index.
+ */
 
-}
-
-MongodbAdapter.prototype.exists = function(criteria, callback){
-
-}
-
-MongodbAdapter.prototype.count = function(criteria, callback){
-
-}
-
-MongodbAdapter.prototype.connect = function(callback){
-
-}
-
-MongodbAdapter.prototype.disconnect = function(callback){
-
-}
-
-MongodbAdapter.prototype.execute = function(callback){
+exports.find = function(name, fn){
 
 }

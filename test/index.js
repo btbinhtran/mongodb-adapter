@@ -1,7 +1,7 @@
-var MongodbAdapter = require('..')
-  , assert = require('chai').assert;
+var mongodb = require('..')
+  , assert = require('assert');
 
-describe('MongodbAdapter', function(){
+describe('mongodb adapter', function(){
   it('should define', function(){
     
   });

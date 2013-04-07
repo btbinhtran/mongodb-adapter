@@ -6,26 +6,20 @@
 npm install tower-mongodb-adapter
 ```
 
-## API
+## Example
 
-Nothing yet, come back soon.
+```js
+var mongodb = require('tower-mongodb-adapter');
 
-``` javascript
-var MongodbAdapter = require('tower-mongodb-adapter');
-```
+var query = [
+    ['select', 'posts']
+  , ['where', 'createdAt', 'lte', new Date]
+  , ['return', 'posts']
+];
 
-## Running Tests
-
-```
-git clone git://github.com/tower/mongodb-adapter.git tower-mongodb-adapter
-cd tower-mongodb-adapter
-npm install
-```
-
-then run the tests:
-
-```
-mocha
+mongodb.execute(query).on('data', function(record){
+  
+});
 ```
 
 ## License
