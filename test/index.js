@@ -13,6 +13,8 @@ describe('mongodb adapter', function(){
     assert('mongodb' === topology.name);
 
     topology.on('data', function(data){
+      
+    }).on('close', function(){
       done();
     });
   });

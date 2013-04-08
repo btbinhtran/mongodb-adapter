@@ -4,6 +4,7 @@
   "main": "./index.js",
   "dependencies": {
     "tower-adapter": "*",
-    "tower-topology": "*"
+    "tower-topology": "*",
+    "mongodb": "~1.2.14"
   }
 }
