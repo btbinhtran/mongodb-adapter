@@ -29,6 +29,11 @@ exports
   .type('bitmask')
   .type('array');
 
+stream('mongodb-insert');
+stream('mongodb-update');
+stream('mongodb-remove');
+stream('mongodb-find');
+
 /**
  * Execute a database query.
  */
@@ -76,8 +81,3 @@ exports.remove = function(name, fn){
 exports.find = function(name, fn){
 
 }
-
-stream('mongodb-insert');
-stream('mongodb-update');
-stream('mongodb-remove');
-stream('mongodb-find');
