@@ -5,7 +5,7 @@
 
 var adapter = require('tower-adapter')
   , topology = require('tower-topology')
-  , stream = require('stream') // http://nodejs.org/api/stream.html
+  , stream = require('tower-stream') // http://nodejs.org/api/stream.html
   , ReadableStream = stream.Readable;
 
 /**
@@ -76,3 +76,8 @@ exports.remove = function(name, fn){
 exports.find = function(name, fn){
 
 }
+
+stream('mongodb-insert');
+stream('mongodb-update');
+stream('mongodb-remove');
+stream('mongodb-find');
