@@ -46,13 +46,14 @@ stream('mongodb-find')
   .on('init', function(context, data){
     context.query = collections[data.name].find(data.conditions).stream();
     context.query.pause();
-  })
-  .on('execute', function(context, data, fn){
     context.query
       .on('data', function(record){
-        // query.pause();
+        context.query.pause();
         context.emit('data', record);
       });
+  })
+  .on('execute', function(context, data){
+    context.query.resume();
   });
 
 /**
