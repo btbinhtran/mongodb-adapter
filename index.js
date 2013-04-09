@@ -8,7 +8,8 @@ var adapter = require('tower-adapter')
   , Topology = topology('mongodb')
   , mongodb = require('mongodb')
   , stream = require('tower-stream') // http://nodejs.org/api/stream.html
-  , ReadableStream = stream.Readable;
+  , ReadableStream = stream.Readable
+  , noop = function(){};
 
 /**
  * Expose `mongodb` adapter.
@@ -69,6 +70,7 @@ stream('mongodb-find')
     context.query.resume();
   })
   .on('close', function(){
+    exports.disconnect('test', noop);
     //console.log('closed query!');
   });
 
