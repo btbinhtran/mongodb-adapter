@@ -47,15 +47,15 @@ stream('mongodb-remove');
 // such as `mongodb-find` and `mongodb-find-for-join`, etc.
 stream('mongodb-find')
   .on('open', function(context, data, next){
-    var db = new mongodb.Db('test', new mongodb.Server("127.0.0.1", 27017, {}), {});
+    var db = new mongodb.Db('test', new mongodb.Server("127.0.0.1", 27017, {}), { safe:false });
     db.open(function(err, client){
       context.query = client.collection(context.collectionName).find().stream();
       context.query.pause();
       context.query
         .on('data', function(record){
           context.emit('data', record);
-          //context.query.pause();
-          context.next();
+          context.query.pause();
+          context.execute();
         })
         .on('close', function(){
           context.close();
