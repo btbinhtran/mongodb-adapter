@@ -43,29 +43,34 @@ stream('mongodb-insert')
 stream('mongodb-update');
 stream('mongodb-remove');
 
+// there should probably be mini optimizations here,
+// such as `mongodb-find` and `mongodb-find-for-join`, etc.
 stream('mongodb-find')
-  .on('init', function(context, data){
-
-  })
-  .on('execute', function(context, data, fn){
+  .on('open', function(context, data, next){
     var db = new mongodb.Db('test', new mongodb.Server("127.0.0.1", 27017, {}), {});
     db.open(function(err, client){
-      // data.name
-      context.query = client.collection('posts').find().stream();
-      //context.query.pause();
+      context.query = client.collection(context.collectionName).find().stream();
+      context.query.pause();
       context.query
         .on('data', function(record){
-          console.log('data');
-          // context.query.pause();
           context.emit('data', record);
+          //context.query.pause();
+          context.next();
         })
         .on('close', function(){
           context.close();
-          fn();
+          context.next();
         });
-        
-      //context.query.resume();
+
+      next();
     });
+  })
+  .on('execute', function(context, data, next){
+    context.next = next;
+    context.query.resume();
+  })
+  .on('close', function(){
+    //console.log('closed query!');
   });
 
 /**
@@ -77,10 +82,8 @@ exports.execute = function(query, fn){
 
   // XXX: group the query into a network of inputs/outputs.
   for (var i = 0, n = query.length; i < n; i++) {
-    if (i == 0) {
-      topology.streams = [{ name: 'mongodb-find', inputs: [], outputs: [] }];
-      topology.execute({ name: query[i][1] });
-    }
+    topology.stream('mongodb-find', { collectionName: query[i][1] })
+    topology.execute();
     // topology.edge('posts', 'comments');
     // topology.node('posts', function() {})
   }
