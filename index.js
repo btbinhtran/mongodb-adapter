@@ -36,25 +36,25 @@ exports
  * Mongodb `insert` operation.
  */
 
-stream('mongodb-insert')
+stream('mongodb.insert')
   .on('execute', function(node, data, fn){
     collections[data.name].insert(data.records, fn);
   });
 
-stream('mongodb-update');
-stream('mongodb-remove');
+stream('mongodb.update');
+stream('mongodb.remove');
 
 // there should probably be mini optimizations here,
 // such as `mongodb-find` and `mongodb-find-for-join`, etc.
-stream('mongodb-find')
+stream('mongodb.find')
   .on('open', function(context, data, next){
     exports.connect('test', function(error, client){
       context.query = client.collection(context.collectionName).find().stream();
       context.query.pause();
       context.query
         .on('data', function(record){
-          context.emit('data', record);
           context.query.pause();
+          context.emit('data', record);
           context.execute();
         })
         .on('close', function(){
@@ -78,18 +78,29 @@ stream('mongodb-find')
  * Execute a database query.
  */
 
-exports.execute = function(query, fn){
-  var topology = new Topology;
+exports.execute = function(criteria, fn){
+  var topology = new Topology
+    , name;
 
-  // XXX: group the query into a network of inputs/outputs.
-  for (var i = 0, n = query.length; i < n; i++) {
-    topology.stream('mongodb-find', { collectionName: query[i][1] })
-    topology.execute();
-    // topology.edge('posts', 'comments');
-    // topology.node('posts', function() {})
+  // XXX: this function should just split the criteria by model/adapter.
+  // then the adapter
+  for (var i = 0, n = criteria.length; i < n; i++) {
+    var criterion = criteria[i];
+    switch (criterion[0]) {
+      case 'select':
+      case 'start':
+        topology.stream(name = 'mongodb.find', { constraints: [] });
+        break;
+      case 'constraint':
+        topology.streams[name].constraints.push(criterion);
+        break;
+    }
   }
 
-  if (fn) fn();
+  // XXX: need to come up w/ API for adding events before it's executed.
+  process.nextTick(function(){
+    topology.execute();
+  });
 
   return topology;
 }
