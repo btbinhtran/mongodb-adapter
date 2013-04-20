@@ -7,15 +7,14 @@ var adapter = require('tower-adapter')
   , topology = require('tower-topology')
   , Topology = topology('mongodb')
   , mongodb = require('mongodb')
-  , stream = require('tower-stream') // http://nodejs.org/api/stream.html
-  , ReadableStream = stream.Readable
-  , noop = function(){};
+  , action = require('tower-stream')
+  , queryToTopology = require('tower-query-to-topology');
 
 /**
  * Expose `mongodb` adapter.
  */
 
-var exports = module.exports = adapter('mongodb');
+exports = module.exports = adapter('mongodb');
 
 /**
  * Define MongoDB adapter.
@@ -33,20 +32,20 @@ exports
   .type('array');
 
 /**
- * Mongodb `insert` operation.
+ * Mongodb `create` operation (insert).
  */
 
-stream('mongodb.insert')
-  .on('execute', function(node, data, fn){
+action('mongodb.create')
+  .on('exec', function(node, data, fn){
     collections[data.name].insert(data.records, fn);
   });
 
-stream('mongodb.update');
-stream('mongodb.remove');
+action('mongodb.update');
+action('mongodb.remove');
 
 // there should probably be mini optimizations here,
 // such as `mongodb-find` and `mongodb-find-for-join`, etc.
-stream('mongodb.find')
+action('mongodb.query')
   .on('open', function(context, data, next){
     exports.connect('test', function(error, client){
       context.query = client.collection(context.collectionName).find().stream();
@@ -55,7 +54,7 @@ stream('mongodb.find')
         .on('data', function(record){
           context.query.pause();
           context.emit('data', record);
-          context.execute();
+          context.exec();
         })
         .on('close', function(){
           context.close();
@@ -65,12 +64,12 @@ stream('mongodb.find')
       next();
     });
   })
-  .on('execute', function(context, data, next){
+  .on('exec', function(context, data, next){
     context.next = next;
     context.query.resume();
   })
   .on('close', function(){
-    exports.disconnect('test', noop);
+    exports.disconnect('test', function(){});
     //console.log('closed query!');
   });
 
@@ -78,28 +77,12 @@ stream('mongodb.find')
  * Execute a database query.
  */
 
-exports.execute = function(criteria, fn){
-  var topology = new Topology
-    , name;
-
-  // XXX: this function should just split the criteria by model/adapter.
-  // then the adapter
-  for (var i = 0, n = criteria.length; i < n; i++) {
-    var criterion = criteria[i];
-    switch (criterion[0]) {
-      case 'select':
-      case 'start':
-        topology.stream(name = 'mongodb.find', { constraints: [] });
-        break;
-      case 'constraint':
-        topology.streams[name].constraints.push(criterion);
-        break;
-    }
-  }
+exports.execute = function(constraints, fn){
+  var topology = queryToTopology('mongodb', constraints);
 
   // XXX: need to come up w/ API for adding events before it's executed.
   process.nextTick(function(){
-    topology.execute();
+    topology.exec();
   });
 
   return topology;
@@ -117,7 +100,7 @@ exports.connect = function(name, fn){
   if (this.connections[name]) return fn(null, this.connections[name]);
 
   var self = this
-    , db = new mongodb.Db(name, new mongodb.Server("127.0.0.1", 27017, {}), { safe:false });
+    , db = new mongodb.Db(name, new mongodb.Server('127.0.0.1', 27017, {}), { safe:false });
 
   db.open(function(err, client){
     if (err) return fn(err);
