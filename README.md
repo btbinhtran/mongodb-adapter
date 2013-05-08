@@ -2,8 +2,8 @@
 
 ## Installation
 
-```
-npm install tower-mongodb-adapter
+```bash
+$ npm install tower-mongodb-adapter
 ```
 
 ## Examples
