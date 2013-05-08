@@ -32,46 +32,47 @@ exports
  * XXX: Switch database.
  */
 
-exports.use = function(name, fn){
-
+exports.use = function(name){
+  exports.database = name;
+  return exports;
 }
+
+/**
+ * Find.
+ */
+
+stream('mongodb.find', find);
 
 /**
  * Mongodb `create` operation (insert).
  */
 
 stream('mongodb.create', create);
-stream('mongodb.update');
-stream('mongodb.remove');
+stream('mongodb.update', update);
+stream('mongodb.remove', remove);
 
 // there should probably be mini optimizations here,
 // such as `mongodb-find` and `mongodb-find-for-join`, etc.
-stream('mongodb.find')
+stream('mongodb.stream')
   .on('open', function(context, data, next){
-    exports.connect('test', function(error, client){
-      context.query = client.collection(context.collectionName).find().stream();
-      context.query.pause();
-      context.query
-        .on('data', function(record){
-          context.query.pause();
-          context.emit('data', record);
-          context.exec();
-        })
-        .on('close', function(){
-          context.close();
-          context.next();
-        });
+    context.query = context.client.collection(context.collectionName).find().stream();
+    context.query.pause();
+    context.query
+      .on('data', function(record){
+        context.query.pause();
+        context.emit('data', record);
+        context.exec();
+      })
+      .on('close', function(){
+        context.close();
+        context.next();
+      });
 
-      next();
-    });
+    next();
   })
   .on('exec', function(context, data, next){
     context.next = next;
     context.query.resume();
-  })
-  .on('close', function(){
-    exports.disconnect('test', function(){});
-    //console.log('closed query!');
   });
 
 /**
@@ -79,9 +80,13 @@ stream('mongodb.find')
  */
 
 exports.exec = function(query, fn){
+  var client = exports.connections[exports.database];
+  if (!client) throw new Error('Not connected to a database');
+
   var action = stream('mongodb.' + query.type).create({
     query: query,
-    collectionName: query.selects[0].model
+    client: client,
+    collection: client.collection(query.selects[0].model)
   });
 
   process.nextTick(function(){
@@ -108,6 +113,8 @@ exports.connect = function(name, fn){
   db.open(function(err, client){
     if (err) return fn(err);
     self.connections[name] = client;
+    // XXX: not sure the best way to do this.
+    if (!exports.database) exports.database = name;
     fn(null, client);
   });
 
@@ -125,18 +132,48 @@ exports.connect = function(name, fn){
 exports.disconnect = function(name, fn){
   if (this.connections[name]) {
     this.connections[name].close();
+    delete this.connections[name];
+    if (name === exports.database)
+      delete exports.database;
     process.nextTick(fn);
   } else {
     fn();
   }
 }
 
-function create(context, data, fn){
-  exports.connect('test', function(error, client){
-    var collection = client.collection(context.collectionName);
-    collection.insert(context.query.data, function(err, records){
-      context.emit('data', records);
-      fn();
-    });
+function find(context, data, fn) {
+  var conditions = {};
+  context.query.constraints;
+
+  context.collection.find(conditions).toArray(function(err, docs){
+    // deserialize.
+    context.emit('data', docs);
+    fn();
+  });
+}
+
+function create(context, data, fn) {
+  context.collection.insert(context.query.data, function(err, docs){
+    context.emit('data', docs);
+    fn();
+  });
+}
+
+function update(context, data, fn) {
+  var updates = context.query.data;
+  var constraints = {};
+
+  context.collection.update(constraints, updates, function(err, docs){
+    context.emit('data', docs);
+    fn();
+  });
+}
+
+function remove(context, data, fn) {
+  var constraints = {};
+  
+  context.collection.remove(constraints, function(err, docs){
+    context.emit('data', docs);
+    fn();
   });
 }
