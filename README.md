@@ -1,4 +1,4 @@
-# Tower Mongodb Adapter
+# Tower MongoDB Adapter
 
 ## Installation
 
