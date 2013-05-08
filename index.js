@@ -29,6 +29,14 @@ exports
   .type('array');
 
 /**
+ * XXX: Switch database.
+ */
+
+exports.use = function(name, fn){
+
+}
+
+/**
  * Mongodb `create` operation (insert).
  */
 
