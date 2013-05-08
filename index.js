@@ -202,15 +202,16 @@ function serializeConstraints(context) {
   var constraints = {};
 
   context.query.constraints.forEach(function(constraint){
-    var attr = constraint.left.attr;
+    var left = constraint.left.attr;
+    var right = constraint.right.value;
 
     switch (constraint.operator) {
       case 'eq':
-        constraints[attr] = constraint.right.value;
+        constraints[left] = right;
         break;
       default:
-        constraints[attr] || (constraints[attr] = {});
-        constraints[attr]['$' + constraint.operator] = constraint.right.value;
+        constraints[left] || (constraints[left] = {});
+        constraints[left]['$' + constraint.operator] = right;
         break;
     }
   });
