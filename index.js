@@ -142,7 +142,7 @@ exports.disconnect = function(name, fn){
 }
 
 function find(context, data, fn) {
-  var constraints = serializeConstraints(context);
+  var constraints = serializeConstraints(context.query);
 
   context.collection.find(constraints).toArray(function(err, docs){
     // deserialize.
@@ -152,7 +152,7 @@ function find(context, data, fn) {
 }
 
 function create(context, data, fn) {
-  var attrs = serializeAttrs(context);
+  var attrs = serializeAttrs(context.query);
 
   context.collection.insert(attrs, function(err, docs){
     context.emit('data', docs);
@@ -161,8 +161,8 @@ function create(context, data, fn) {
 }
 
 function update(context, data, fn) {
-  var attrs = serializeAttrs(context);
-  var constraints = serializeConstraints(context);
+  var attrs = serializeAttrs(context.query);
+  var constraints = serializeConstraints(context.query);
 
   context.collection.update(constraints, attrs, function(err, docs){
     context.emit('data', docs);
@@ -171,7 +171,7 @@ function update(context, data, fn) {
 }
 
 function remove(context, data, fn) {
-  var constraints = serializeConstraints(context);
+  var constraints = serializeConstraints(context.query);
   
   context.collection.remove(constraints, function(err, docs){
     context.emit('data', docs);
@@ -179,12 +179,12 @@ function remove(context, data, fn) {
   });
 }
 
-function serializeAttrs(context) {
-  if (!context.query.data) return {};
+function serializeAttrs(query) {
+  if (!query.data) return {};
   // XXX: handle multiple
   var result = [];
 
-  context.query.data.forEach(function(data){
+  query.data.forEach(function(data){
     var attrs = {};
     
     for (var key in data) {
@@ -198,10 +198,10 @@ function serializeAttrs(context) {
   return result;
 }
 
-function serializeConstraints(context) {
+function serializeConstraints(query) {
   var constraints = {};
 
-  context.query.constraints.forEach(function(constraint){
+  query.constraints.forEach(function(constraint){
     var left = constraint.left.attr;
     var right = constraint.right.value;
 
@@ -218,18 +218,18 @@ function serializeConstraints(context) {
 
   // sorting
 
-  if (context.query.sorting) {
+  if (query.sorting) {
     constraints['$orderby'] = {};
-    context.query.sorting.forEach(function(sorting){
+    query.sorting.forEach(function(sorting){
       constraints['$orderby'][sorting.attr] = sorting.direction;
     });
   }
 
   // paging
 
-  if (context.query.paging) {
-    if (context.query.paging.limit)
-      constraints.limit = context.query.paging.limit;
+  if (query.paging) {
+    if (query.paging.limit)
+      constraints.limit = query.paging.limit;
   }
 
   return constraints;
