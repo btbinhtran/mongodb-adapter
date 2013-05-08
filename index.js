@@ -142,10 +142,9 @@ exports.disconnect = function(name, fn){
 }
 
 function find(context, data, fn) {
-  var conditions = {};
-  context.query.constraints;
+  var constraints = serializeConstraints(context);
 
-  context.collection.find(conditions).toArray(function(err, docs){
+  context.collection.find(constraints).toArray(function(err, docs){
     // deserialize.
     context.emit('data', docs);
     fn();
@@ -153,27 +152,72 @@ function find(context, data, fn) {
 }
 
 function create(context, data, fn) {
-  context.collection.insert(context.query.data, function(err, docs){
+  var attrs = serializeAttrs(context);
+
+  context.collection.insert(attrs, function(err, docs){
     context.emit('data', docs);
     fn();
   });
 }
 
 function update(context, data, fn) {
-  var updates = context.query.data;
-  var constraints = {};
+  var attrs = serializeAttrs(context);
+  var constraints = serializeConstraints(context);
 
-  context.collection.update(constraints, updates, function(err, docs){
+  context.collection.update(constraints, attrs, function(err, docs){
     context.emit('data', docs);
     fn();
   });
 }
 
 function remove(context, data, fn) {
-  var constraints = {};
+  var constraints = serializeConstraints(context);
   
   context.collection.remove(constraints, function(err, docs){
     context.emit('data', docs);
     fn();
   });
+}
+
+function serializeAttrs(context) {
+  if (!context.query.data) return {};
+  // XXX: handle multiple
+  var result = [];
+
+  context.query.data.forEach(function(data){
+    var attrs = {};
+    
+    for (var key in data) {
+      // XXX: find model and typecast.
+      attrs[key] = data[key];
+    }
+
+    result.push(attrs);
+  });
+
+  return result;
+}
+
+function serializeConstraints(context) {
+  var constraints = {};
+
+  context.query.constraints.forEach(function(constraint){
+    var attr = constraint.left.attr;
+
+    switch (constraint.operator) {
+      case 'eq':
+        constraints[attr] = constraint.right.value;
+        break;
+      default:
+        constraints[attr] || (constraints[attr] = {});
+        constraints[attr]['$' + constraint.operator] = constraint.right.value;
+        break;
+    }
+  });
+
+  return constraints;
+}
+
+function deserializeAttrs(docs, context) {
+
 }

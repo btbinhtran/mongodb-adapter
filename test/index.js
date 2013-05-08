@@ -7,12 +7,18 @@ describe('mongodb adapter', function(){
   });
 
   it('should create', function(done){
+    var attrs = [
+      { title: 'Foo' },
+      { title: 'Bar' },
+      { title: 'Baz' }
+    ];
+
     mongodb.query()
       .select('post')
-      .create(function(err, records){
+      .create(attrs, function(err, records){
         done();
-      }).on('data', function(){
-        console.log(arguments);
+      }).on('data', function(records){
+        console.log(records);
         done();
       });
   });
@@ -20,10 +26,11 @@ describe('mongodb adapter', function(){
   it('should find', function(done){
     mongodb.query()
       .select('post')
+      .where('title').eq('Bar')
       .find(function(err, records){
         done();
-      }).on('data', function(){
-        console.log(arguments);
+      }).on('data', function(records){
+        console.log(records);
         done();
       });
   });
@@ -33,8 +40,8 @@ describe('mongodb adapter', function(){
       .select('post')
       .update(function(err, records){
         done();
-      }).on('data', function(){
-        console.log(arguments);
+      }).on('data', function(records){
+        console.log(records);
         done();
       });
   });
@@ -44,8 +51,8 @@ describe('mongodb adapter', function(){
       .select('post')
       .remove(function(err, records){
         done();
-      }).on('data', function(){
-        console.log(arguments);
+      }).on('data', function(records){
+        console.log(records);
         done();
       });
   });
