@@ -216,6 +216,22 @@ function serializeConstraints(context) {
     }
   });
 
+  // sorting
+
+  if (context.query.sorting) {
+    constraints['$orderby'] = {};
+    context.query.sorting.forEach(function(sorting){
+      constraints['$orderby'][sorting.attr] = sorting.direction;
+    });
+  }
+
+  // paging
+
+  if (context.query.paging) {
+    if (context.query.paging.limit)
+      constraints.limit = context.query.paging.limit;
+  }
+
   return constraints;
 }
 
