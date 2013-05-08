@@ -4,11 +4,8 @@
  */
 
 var adapter = require('tower-adapter')
-  , topology = require('tower-topology')
-  , Topology = topology('mongodb')
   , mongodb = require('mongodb')
-  , action = require('tower-stream')
-  , queryToTopology = require('tower-query-to-topology');
+  , stream = require('tower-stream');
 
 /**
  * Expose `mongodb` adapter.
@@ -35,17 +32,13 @@ exports
  * Mongodb `create` operation (insert).
  */
 
-action('mongodb.create')
-  .on('exec', function(node, data, fn){
-    collections[data.name].insert(data.records, fn);
-  });
-
-action('mongodb.update');
-action('mongodb.remove');
+stream('mongodb.create', create);
+stream('mongodb.update');
+stream('mongodb.remove');
 
 // there should probably be mini optimizations here,
 // such as `mongodb-find` and `mongodb-find-for-join`, etc.
-action('mongodb.query')
+stream('mongodb.find')
   .on('open', function(context, data, next){
     exports.connect('test', function(error, client){
       context.query = client.collection(context.collectionName).find().stream();
@@ -77,15 +70,17 @@ action('mongodb.query')
  * Execute a database query.
  */
 
-exports.execute = function(constraints, fn){
-  var topology = queryToTopology('mongodb', constraints);
-
-  // XXX: need to come up w/ API for adding events before it's executed.
-  process.nextTick(function(){
-    topology.exec();
+exports.exec = function(query, fn){
+  var action = stream('mongodb.' + query.type).create({
+    query: query,
+    collectionName: query.selects[0].model
   });
 
-  return topology;
+  process.nextTick(function(){
+    action.exec(fn);
+  });
+
+  return action;
 }
 
 /**
@@ -128,50 +123,12 @@ exports.disconnect = function(name, fn){
   }
 }
 
-/**
- * Create a database/collection/index.
- *
- * @param {String} name
- * @param {Function} fn
- * @api public
- */
-
-exports.create = function(name, fn){
-
-}
-
-/**
- * Update a database/collection/index.
- *
- * @param {String} name
- * @param {Function} fn
- * @api public
- */
-
-exports.update = function(name, fn){
-
-}
-
-/**
- * Remove a database/collection/index.
- *
- * @param {String} name
- * @param {Function} fn
- * @api public
- */
-
-exports.remove = function(name, fn){
-
-}
-
-/**
- * Find a database/collection/index.
- *
- * @param {String} name
- * @param {Function} fn
- * @api public
- */
-
-exports.find = function(name, fn){
-
+function create(context, data, fn){
+  exports.connect('test', function(error, client){
+    var collection = client.collection(context.collectionName);
+    collection.insert(context.query.data, function(err, records){
+      context.emit('data', records);
+      fn();
+    });
+  });
 }
